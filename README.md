@@ -9,10 +9,10 @@
 ***
 ## 两种batch_size下的情况
 **batch_size=180**
-![VGGNET](https://github.com/converk/VGG_SE-cifar100-pytorch/blob/master/tensorboard-batch_size180.png)
+![VGGNET180](https://github.com/converk/VGG_SE-cifar100-pytorch/blob/master/tensorboard-batch_size180.png)
 
 **batch_size=100**
-![VGGNET](https://github.com/converk/VGG_SE-cifar100-pytorch/blob/master/tensorboard-batch_size100.png)
+![VGGNET100](https://github.com/converk/VGG_SE-cifar100-pytorch/blob/master/tensorboard-batch_size100.png)
 
 **不同batch_size比较**
 
