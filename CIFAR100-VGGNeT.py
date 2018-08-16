@@ -3,49 +3,59 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.utils.data as Data
 import torch
+from tensorboardX import SummaryWriter
 import torch.nn as nn
 from torch.autograd import Variable
 # 定义是否使用GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-LR=0.00008
+writer = SummaryWriter('/output/log')
+LR=0.0002
 EPOCH=30
-BATCH_SIZE=180
+BATCH_SIZE=100
+local_dir='./cifar100'
+far_dir='/input/1/'
 
 
 # 定义对数据的预处理
-transform = transforms.Compose([
-        transforms.ToTensor(), # 转为Tensor
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # 归一化
-                             ])
+train_transform = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),  # 先四周填充0，在吧图像随机裁剪成32*32
+            transforms.RandomHorizontalFlip(),  # 图像一半的概率翻转，一半的概率不翻转
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+
+test_transform= transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
 
 # 训练集
 trainset = torchvision.datasets.CIFAR100(
-                    root='/input/1',
+                    root=far_dir,
                     train=True,
                     download=False,
-                    transform=transform)
+                    transform=train_transform)
 #print(type(trainset.train_data))
 trainloader = Data.DataLoader(
                     dataset=trainset,
                     batch_size=BATCH_SIZE,
                     shuffle=True,
-                    num_workers=2)
+                    num_workers=8)
 
 
 
 #得到测试集的数据
 testset = torchvision.datasets.CIFAR100(
-                    '/input/1',
+                    root=far_dir,
                     train=False,
                     download=False,
-                    transform=transform)
+                    transform=test_transform)
 
 testloader = Data.DataLoader(
                     dataset=testset,
                     batch_size=BATCH_SIZE,
                     shuffle=False,
-                    num_workers=2)
+                    num_workers=8)
+
 
 class VGGNeT(nn.Module):
     def __init__(self):
@@ -76,16 +86,21 @@ class VGGNeT(nn.Module):
 
 
 def train():
-    #lenet = VGGNeT().to(device)
-    lenet=torch.load('net2.pkl')
+    lenet=VGGNeT().to(device)
     optimizer=torch.optim.Adam(lenet.parameters(), lr=LR)
     loss_func=torch.nn.CrossEntropyLoss()
-
+    j=0
     for epoch in range(EPOCH):
+        train_acc,train_total=0,0
         for i,(batch_x,batch_y) in enumerate(trainloader):
             x=Variable(batch_x.to(device))
             y=Variable(batch_y.to(device))
             out=lenet(x)
+
+            _,train_pre_y=torch.max(out,1)
+            train_total+=y.size(0)
+            train_acc+=(train_pre_y == y).sum()
+
             loss = loss_func(out, y)
 
             optimizer.zero_grad()
@@ -93,9 +108,12 @@ def train():
             optimizer.step()
 
             if i % 200 == 0:
-                torch.save(lenet,'net2.pkl')
+                j+=1
+                torch.save(lenet,'net6.pkl')
+                acc_tr=float(train_acc)/train_total
                 acc=test(lenet,testloader)
-                print('Epoch1: ', epoch, '| test accuracy: %.4f' % acc)
+                print('Epoch: ', epoch, '| train loss:%.4f' % loss,'| train accuracy: %.4f' % acc_tr,'| test accuracy: %.4f' % acc)
+                writer.add_scalars('data/group', {'train_loss':loss, 'train_acc':acc_tr, 'test_acc':acc}, j)
     return lenet
 
 def test(net,testloader):
