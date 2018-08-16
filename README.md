@@ -7,13 +7,13 @@
 ![VGGNET](https://github.com/converk/VGG_SE-cifar100-pytorch/blob/master/VGG.png)
 
 ***
-## 两种bitch_size下的情况
-**bitch_size=180**
+## 两种batch_size下的情况
+**batch_size=180**
 ![VGGNET](https://github.com/converk/VGG_SE-cifar100-pytorch/blob/master/tensorboard-batch_size180.png)
 
-**bitch_size=100**
+**batch_size=100**
 ![VGGNET](https://github.com/converk/VGG_SE-cifar100-pytorch/blob/master/tensorboard-batch_size100.png)
 
-**不同bitch_size比较**
+**不同batch_size比较**
 
     对于100的无论是在训练集准确率,测试集准确率都要低于180,loss也略高于180
